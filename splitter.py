@@ -50,12 +50,40 @@ class Splitter(object):
 
         mw = mwmatching.maxWeightMatching(edges)
         result = {}
+        unused_actors = actors[:]
+        unused_items = items[:]
         for i in range(len(items)):
             if mw[i] != -1:
                 winner = actors[mw[i] - len(items)]
                 result[items[i]] = (winner, bid_dict[(items[i], winner)].amount)
+                unused_actors.remove(winner)
+                unused_items.remove(items[i])
             else:
                 result[items[i]] = None
+
+
+        # This isn't really ideal, but this code is meant to handle the case
+        # where not all bids can be satisfied. The max-weight solution will
+        # force someone into a room at a different price than they bid.
+        # In my tests, it seems to always be a lower price, but I'm not counting
+        # on that.
+        #
+        # Example input that causes this issue (5 person / 5 item auction):
+        #
+        # 1640, 1540, 1140, 1640, 1740
+        # 1540, 1240, 1340, 1640, 1940
+        # 1740, 1540, 1040, 1640, 1740
+        # 1440, 1640, 1240, 1640, 1740
+        # 1640, 1640, 1140, 1640, 1640
+        total_dollars = sum([bid.amount for bid in bids if bid.actor == actors[0]])
+        amount_spent = sum([v[1] for k,v in result.items() if v is not None])
+        remaining_amount = total_dollars - amount_spent
+        remaining_per_item = remaining_amount / len(unused_items)
+        if unused_actors:
+            print "Warning: could not properly satisfy auction."
+            for k,v in result.items():
+                if v is None:
+                    result[k] = (unused_actors, remaining_per_item)
 
         return result
 
