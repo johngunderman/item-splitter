@@ -78,7 +78,9 @@ class Splitter(object):
         total_dollars = sum([bid.amount for bid in bids if bid.actor == actors[0]])
         amount_spent = sum([v[1] for k,v in result.items() if v is not None])
         remaining_amount = total_dollars - amount_spent
-        remaining_per_item = remaining_amount / len(unused_items)
+        if len(unused_items):
+            remaining_per_item = remaining_amount / len(unused_items)
+
         if unused_actors:
             print "Warning: could not properly satisfy auction."
             for k,v in result.items():
